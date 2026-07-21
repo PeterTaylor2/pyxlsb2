@@ -104,6 +104,22 @@ class Worksheet(object):
                     row._add_cell(rec.col1, None, rec.formula, rec.style, override=True)
                 else:
                     raise Exception("mismatch between row and ARR_FMLA record: row_num: %d rec_row1: %d" % (row.num, rec.row1))
+            elif rectype == rt.AC_BEGIN:
+                pass # debug point
+            elif rectype == rt.AC_END:
+                pass # debug point
+            elif rectype == rt.CELL_META:
+                pass # debug point
+            elif rectype == rt.RW_DESCENT:
+                pass # debug point
+            elif rectype == rt.SHR_FMLA:
+                pass # debug point
+            else:
+                pass # debug point
+
+            # we appear to ignore five rectype's as shown above
+            # to handle them we would need to write sub-classes of BaseRecord (ultimately)
+            # in the file records.py and add these classes to the index in RecordReader class
 
     def close(self):
         """Release the resources associated with this worksheet."""

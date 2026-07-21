@@ -70,7 +70,8 @@ class Workbook(object):
                 elif rectype == rt.PLACEHOLDER_NAME:
                     self.list_names.append(rec.name)
                     self.defined_names[rec.name] = rec
-                    # break
+                else: # there are too many rectype's that we ignore to enumerate them here
+                    pass # debug point
 
         ssfp = self._pkg.get_sharedstrings_part()
         if ssfp is not None:
