@@ -943,13 +943,17 @@ class FuncPtg(ClassifiedPtg):
     def stringify(self, tokens, workbook):
         args = list()
 
-        if len(function_names[self.idx])>1:
-            args_no = function_names[self.idx][1]
+        # function_names is a list of tuples
+        # element[1] of the tuple is the number of arguments of the function
+
+        function_info = function_names[self.idx]
+        if len(function_info)>1:
+            args_no = function_info[1]
             for i in xrange(args_no):
                 arg = tokens.pop().stringify(tokens, workbook)
                 args.append(arg)
 
-        return '{}({})'.format(function_names[self.idx][0], ', '.join(reversed(args)))
+        return '{}({})'.format(function_info[0], ', '.join(reversed(args)))
 
 
 class FuncVarPtg(ClassifiedPtg):
