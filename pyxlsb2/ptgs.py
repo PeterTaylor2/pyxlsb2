@@ -964,9 +964,34 @@ class FuncVarPtg(ClassifiedPtg):
 
     def stringify(self, tokens, workbook):
         if self.idx == 255:  # UserDefinedFunction
-            function_name = tokens[0].stringify(tokens, workbook).strip()
-            del tokens[0]
-            self.argc -= 1
+            # previous code as follows:
+            # function_name = tokens[0].stringify(tokens, workbook).strip()
+            # del tokens[0]
+            # however this is unusual - usually we pop from the tokens
+            # (i.e. the last position in the list)
+            #
+            # experimentally, it appears that the NameXPtg is not always
+            # the first or last position in the token list
+            #
+            # it might essentially be the end pointer for FuncVarPtg
+            #
+            # anyway what we do is search backwards until we find NameXPtg
+            #
+            # you might be able to write this code more efficiently, but this is clear enough
+
+            N = len(tokens)
+            pos = -1
+            for i in range(N):
+                if tokens[N-i-1].ptg == NameXPtg.ptg:
+                    pos = N-i-1
+                    break
+
+            if pos == -1:
+                raise Exception("UserDefinedFunction: no NameXPtg found in tokens")
+
+            function_name = tokens.pop(pos).stringify(tokens, workbook).strip()
+
+            self.argc -= 1 # this appears necessary
         else:
             function_name = function_names[self.idx][0]
 
