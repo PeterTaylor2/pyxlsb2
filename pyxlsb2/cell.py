@@ -57,14 +57,15 @@ class Cell(DeprecatedCellMixin):
         style_id (int): The style index in the style table.
     """
 
-    __slots__ = ('row', 'col', 'value', 'formula', 'style_id')
+    __slots__ = ('row', 'col', 'value', 'formula', 'style_id', 'override')
 
-    def __init__(self, row, col, value=None, formula=None, style_id=None):
+    def __init__(self, row, col, value=None, formula=None, style_id=None, override=False):
         self.row = row
         self.col = col
         self.value = value
         self.formula = formula
         self.style_id = style_id
+        self.override = override
 
     def __repr__(self):
         return 'Cell(row={}, col={}, value={}, formula={}, style_id={})' \

@@ -383,6 +383,45 @@ class FormatRecord(BaseRecord):
         code = reader.read_string()
         return cls(fid, code)
 
+class PlaceholderNameRecord(BaseRecord):
+    brt = rt.PLACEHOLDER_NAME
+
+    def __init__(self, name):
+        self.name = name
+
+    @classmethod
+    def read(cls, reader, rectype, reclen):
+        name = reader.read_string()
+        return cls(name)
+
+class ArrayFormulaRecord(BaseRecord):
+    brt = rt.ARR_FMLA
+
+    def __init__(self, row1, row2, col1, col2, flag, style, formula_len, formula):
+        self.row1 = row1
+        self.row2 = row2
+        self.col1 = col1
+        self.col2 = col2
+        self.flag = flag
+        self.style = style
+        self.formula_len = formula_len
+        self.formula = formula
+
+    @classmethod
+    def read(cls, reader, rectype, reclen):
+        row1 = reader.read_int()
+        row2 = reader.read_int()
+        col1 = reader.read_int()
+        col2 = reader.read_int()
+
+        flag = reader.read_byte()
+
+        formula_len = reader.read_int()
+
+        formula = reader.read(formula_len)
+        style = reader.read_int()
+
+        return cls(row1, row2, col1, col2, flag, style, formula_len, formula)
 
 class FontRecord(BaseRecord):
     brt = rt.FONT

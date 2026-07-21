@@ -16,6 +16,10 @@ class RecordReader(object):
     _default_record = recs.UnknownRecord
 
     _records = {
+
+        rt.PLACEHOLDER_NAME: recs.PlaceholderNameRecord,
+        rt.ARR_FMLA:         recs.ArrayFormulaRecord,
+
         # Workbook part handlers
         rt.BEGIN_BOOK:       recs.SimpleRecord('Workbook'),
         rt.END_BOOK:         recs.SimpleRecord('WorkbookEnd'),

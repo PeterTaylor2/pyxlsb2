@@ -67,6 +67,9 @@ class Workbook(object):
                     self.list_names.append(rec.name)
                     self.defined_names[rec.name] = rec
                     rec.formula = Formula.parse(rec.formula_raw).stringify(self)
+                elif rectype == rt.PLACEHOLDER_NAME:
+                    self.list_names.append(rec.name)
+                    self.defined_names[rec.name] = rec
                     # break
 
         ssfp = self._pkg.get_sharedstrings_part()

@@ -31,6 +31,11 @@ class Row(object):
 
     def _add_cell(self, col, *args, **kwargs):
         c = Cell(self, col, *args, **kwargs)
+
+        if col in self._cells and not c.override:
+            print("ignoring same column %d already in row %d" % (col, self.num))
+            return self._cells[col] # return what is already there
+
         self._cells[col] = c
         if col >= self._cols:
             self._cols = col + 1

@@ -603,7 +603,13 @@ class NameXPtg(ClassifiedPtg):
         self.name_idx = name_idx
         self._reserved = reserved
 
-    # FIXME: We need to read names to stringify this
+    def stringify(self, tokens, workbook):
+        if self.sheet_idx == 0 and self.name_idx > 0:
+            name = workbook.list_names[self.name_idx-1]
+            return name
+
+        # FIXME: This is not correct, but it will at least show something
+        return str(self.sheet_idx) + ':' + str(self.name_idx)
 
     @classmethod
     def read(cls, reader, ptg):
@@ -768,11 +774,15 @@ class ExpPtg(BasePtg):
         self.row = row
         self.col = col
 
-    # FIXME: We need a workbook that supports direct cell referencing to stringify this
+    def stringify(self, tokens, workbook):
+        # FIXME: not ideal
+        # better than #PTG1!
+        return "RC(%s,%s)" % (self.row, self.col)
 
     @classmethod
     def read(cls, reader, ptg):
-        row = reader.read_int()
+        # typically we get only 4-bytes of data - previously the code said int,short but pragmatically it seems to be short,short
+        row = reader.read_short()
         col = reader.read_short()
         return cls(row, col)
 

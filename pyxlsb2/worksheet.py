@@ -97,6 +97,13 @@ class Worksheet(object):
                 if row is not None:
                     yield row
                 break
+            elif rectype == rt.ARR_FMLA:
+                if row.num == rec.row1:
+                    # the array formula must take precedence over any cell value previously defined
+                    # hence override=True
+                    row._add_cell(rec.col1, None, rec.formula, rec.style, override=True)
+                else:
+                    raise Exception("mismatch between row and ARR_FMLA record: row_num: %d rec_row1: %d" % (row.num, rec.row1))
 
     def close(self):
         """Release the resources associated with this worksheet."""
