@@ -967,35 +967,18 @@ class FuncVarPtg(ClassifiedPtg):
         self.ce = ce
 
     def stringify(self, tokens, workbook):
+        is_udf = False
         if self.idx == 255:  # UserDefinedFunction
             # previous code as follows:
             # function_name = tokens[0].stringify(tokens, workbook).strip()
             # del tokens[0]
-            # however this is unusual - usually we pop from the tokens
-            # (i.e. the last position in the list)
+            # self.argc -= 1
             #
-            # experimentally, it appears that the NameXPtg is not always
-            # the first or last position in the token list
-            #
-            # it might essentially be the end pointer for FuncVarPtg
-            #
-            # anyway what we do is search backwards until we find NameXPtg
-            #
-            # you might be able to write this code more efficiently, but this is clear enough
-
-            N = len(tokens)
-            pos = -1
-            for i in range(N):
-                if tokens[N-i-1].ptg == NameXPtg.ptg:
-                    pos = N-i-1
-                    break
-
-            if pos == -1:
-                raise Exception("UserDefinedFunction: no NameXPtg found in tokens")
-
-            function_name = tokens.pop(pos).stringify(tokens, workbook).strip()
-
-            self.argc -= 1 # this appears necessary
+            # what we think is going on is that the count (self.argc) includes
+            # the function name - so we just extract the args as usual but
+            # before defining the formula we pop the last argument as the
+            # function_name
+            is_udf = True
         else:
             function_name = function_names[self.idx][0]
 
@@ -1003,6 +986,9 @@ class FuncVarPtg(ClassifiedPtg):
         for i in xrange(self.argc):
             arg = tokens.pop().stringify(tokens, workbook).strip()
             args.append(arg)
+
+        if is_udf:
+            function_name = args.pop()
 
         return '{}({})'.format(function_name, ', '.join(reversed(args)))
 
