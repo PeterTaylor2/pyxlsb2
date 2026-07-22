@@ -393,9 +393,14 @@ class NamePtg(ClassifiedPtg):
         self._reserved = reserved
 
     def stringify(self, tokens, workbook):
-        defined = workbook.defined_names[workbook.list_names[self.idx - 1]]
-        # return '%s (%s)' % (defined.name, defined.formula)
-        return defined.formula if (defined.formula and '#NAME?' != defined.formula) else defined.name
+        try:
+            defined = workbook.defined_names[workbook.list_names[self.idx - 1]]
+        except:
+            return "UndefinedName[%d]" % self.idx
+
+        # don't return the formula because for a named range we want the name
+        # rather than the cell address which will not be very informative
+        return defined.name
 
     @classmethod
     def read(cls, reader, ptg):
@@ -604,12 +609,29 @@ class NameXPtg(ClassifiedPtg):
         self._reserved = reserved
 
     def stringify(self, tokens, workbook):
-        if self.sheet_idx == 0 and self.name_idx > 0:
-            name = workbook.list_names[self.name_idx-1]
-            return name
+        sheet = None if self.sheet_idx == 0 else workbook.get_sheet_by_sheetId(self.sheet_idx)
+        if sheet is None:
+            try:
+                if self.name_idx <= 0:
+                    raise Exception("out of range")
+                name = workbook.udf_index[self.name_idx-1]
+                return name
+            except:
+                name = "UndefinedName[%s]" % self.name_idx
+                return name
 
-        # FIXME: This is not correct, but it will at least show something
-        return str(self.sheet_idx) + ':' + str(self.name_idx)
+        # this is very confusing - in some cases sheet_idx is not zero
+        # this could then either be a name defined in workbook.list_name
+        # or a UDF defined in workbook.udf_index
+        #
+        # we have seen both cases...
+
+        try:
+            name = workbook.list_name[self.name_idx]
+            return name
+        except:
+            name = "%s!UndefinedName[%s]" % (sheet.name, self.name_idx)
+            return name
 
     @classmethod
     def read(cls, reader, ptg):
@@ -933,8 +955,6 @@ class FuncPtg(ClassifiedPtg):
         super(FuncPtg, self).__init__(*args, **kwargs)
         self.idx = idx
 
-    # FIXME: We need a workbook to stringify this (most likely)
-
     @classmethod
     def read(cls, reader, ptg):
         idx = reader.read_short()
@@ -951,9 +971,11 @@ class FuncPtg(ClassifiedPtg):
             args_no = function_info[1]
             for i in xrange(args_no):
                 arg = tokens.pop().stringify(tokens, workbook)
+                arg = "" if arg is None else arg.strip() # consistent with FuncVarPtg
                 args.append(arg)
 
-        return '{}({})'.format(function_info[0], ', '.join(reversed(args)))
+        # join with ',' instead of ', ' for consistency with openpyxl
+        return '{}({})'.format(function_info[0], ','.join(reversed(args)))
 
 
 class FuncVarPtg(ClassifiedPtg):
@@ -984,13 +1006,15 @@ class FuncVarPtg(ClassifiedPtg):
 
         args = list()
         for i in xrange(self.argc):
-            arg = tokens.pop().stringify(tokens, workbook).strip()
+            arg = tokens.pop().stringify(tokens, workbook)
+            arg = "" if arg is None else arg.strip() # consistent with FuncPtg
             args.append(arg)
 
         if is_udf:
             function_name = args.pop()
 
-        return '{}({})'.format(function_name, ', '.join(reversed(args)))
+        # join with ',' instead of ', ' for consistency with openpyxl
+        return '{}({})'.format(function_name, ','.join(reversed(args)))
 
     @classmethod
     def read(cls, reader, ptg):

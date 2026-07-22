@@ -44,6 +44,7 @@ class Workbook(object):
         self.externals = None
         self.defined_names = {}
         self.list_names = []
+        self.udf_index = []
 
         workbook_rels = self._pkg.get_workbook_rels()
         with self._pkg.get_workbook_part() as f:
@@ -68,7 +69,7 @@ class Workbook(object):
                     self.defined_names[rec.name] = rec
                     rec.formula = Formula.parse(rec.formula_raw).stringify(self)
                 elif rectype == rt.PLACEHOLDER_NAME:
-                    self.list_names.append(rec.name)
+                    self.udf_index.append(rec.name)
                     self.defined_names[rec.name] = rec
                 else: # there are too many rectype's that we ignore to enumerate them here
                     pass # debug point
@@ -142,6 +143,15 @@ class Workbook(object):
         else:
             rels_fp = None
         return Worksheet(self, self.sheets[idx], fp, rels_fp)
+
+    def get_sheet_by_sheetId(self, sheetId):
+        """Get a SheetRecord by sheetId rather by position within the list.
+
+        Returns None on failure.
+        """
+        for sheet in sheet.sheets:
+            if sheet.sheetId == sheetId: return sheet
+        return None
 
     def get_sheet_by_name(self, name, with_rels=False):
         """Get a boundsheet by its name.
