@@ -45,10 +45,12 @@ class Workbook(object):
         self.defined_names = {}
         self.list_names = []
         self.udf_index = []
+        self.sup_addins = []
 
         workbook_rels = self._pkg.get_workbook_rels()
         with self._pkg.get_workbook_part() as f:
             counter = 0
+            supAddin = None
             for rectype, rec in RecordReader(f):
                 if rectype == rt.WB_PROP:
                     self.props = rec
@@ -64,13 +66,23 @@ class Workbook(object):
                     self.externals['ExternalSheets'] = rec
                 elif rectype in rt._SUP_LINK_TYPES:
                     self.externals['SupportingLinks'].append(rec)
+                    if rectype == rt.SUP_ADDIN:
+                        if supAddin is not None:
+                            raise Exception("supAddin should not be defined - SUP_SELF should have closed it")
+                        supAddin = rec
+                    elif rectype == rt.SUP_SELF:
+                        if supAddin is not None:
+                            self.sup_addins.append(supAddin)
+                            supAddin = None
+
                 elif rectype == rt.NAME:
                     self.list_names.append(rec.name)
                     self.defined_names[rec.name] = rec
                     rec.formula = Formula.parse(rec.formula_raw).stringify(self)
                 elif rectype == rt.PLACEHOLDER_NAME:
-                    self.udf_index.append(rec.name)
-                    self.defined_names[rec.name] = rec
+                    if supAddin is not None:
+                        supAddin.names.append(rec.name)
+                    self.udf_index.append(rec.name) # keep these for the moment
                 else: # there are too many rectype's that we ignore to enumerate them here
                     pass # debug point
 
@@ -149,7 +161,7 @@ class Workbook(object):
 
         Returns None on failure.
         """
-        for sheet in sheet.sheets:
+        for sheet in self.sheets:
             if sheet.sheetId == sheetId: return sheet
         return None
 

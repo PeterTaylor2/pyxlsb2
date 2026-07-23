@@ -383,6 +383,17 @@ class FormatRecord(BaseRecord):
         code = reader.read_string()
         return cls(fid, code)
 
+# instead of simple since we want to add the placeholder names to this object
+class SupAddinRecord(BaseRecord):
+    brt = rt.SUP_ADDIN
+
+    def __init__(self):
+        self.names = []
+
+    @classmethod
+    def read(cls, reader, rectype, reclen):
+        return cls()
+
 class PlaceholderNameRecord(BaseRecord):
     brt = rt.PLACEHOLDER_NAME
 
@@ -422,6 +433,37 @@ class ArrayFormulaRecord(BaseRecord):
         style = reader.read_int()
 
         return cls(row1, row2, col1, col2, flag, style, formula_len, formula)
+
+# the specification suggests that the format is similar to SHR_FMLA
+# SHR_FMLA has an extra byte before the formula section which we don't want
+# however the intent is different
+# ArrayFormula indicates a single formula with array output
+# SharedFormula indicates a shared formula applying in many cells
+class SharedFormulaRecord(BaseRecord):
+    brt = rt.SHR_FMLA
+
+    def __init__(self, row1, row2, col1, col2, style, formula_len, formula):
+        self.row1 = row1
+        self.row2 = row2
+        self.col1 = col1
+        self.col2 = col2
+        self.style = style
+        self.formula_len = formula_len
+        self.formula = formula
+
+    @classmethod
+    def read(cls, reader, rectype, reclen):
+        row1 = reader.read_int()
+        row2 = reader.read_int()
+        col1 = reader.read_int()
+        col2 = reader.read_int()
+
+        formula_len = reader.read_int()
+
+        formula = reader.read(formula_len)
+        style = reader.read_int()
+
+        return cls(row1, row2, col1, col2, style, formula_len, formula)
 
 class FontRecord(BaseRecord):
     brt = rt.FONT
@@ -492,22 +534,24 @@ class ExternSheetRecord(BaseRecord):
 
         return cls(external_sheets)
 
-class Name(BaseRecord):
-    brt = rt.EXTERN_SHEET
+class NameRecord(BaseRecord):
+    brt = rt.NAME
 
-    def __init__(self, name, formula_raw):
+    def __init__(self, itab, name, formula_raw):
+        self.itab = itab
         self.name = name
         self.formula_raw = formula_raw
         self.formula = None
 
     @classmethod
     def read(cls, reader, rectype, reclen):
-        # 2.4.658 BrtExternSheet
-        # https://docs.microsoft.com/en-us/openspecs/office_file_formats/ms-xlsb/bd8dddfb-90da-423e-b5cd-c692aa86a97a
+        # 2.4.658 BrtName
+        # https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-xlsb/10be4364-6518-41fe-af17-ffe0149d147d
         flags = reader.read_int()
         chKey = reader.read_byte()
         itab = reader.read_int()
         name = reader.read_string()
         sz = reader.read_int()
         formula_raw = reader.read(sz)
-        return cls(name, formula_raw)
+
+        return cls(itab, name, formula_raw)

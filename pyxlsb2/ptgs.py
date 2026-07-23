@@ -1,6 +1,7 @@
 import sys
 from enum import Enum
 from . import recordtypes as rt
+from . import formula
 
 if sys.version_info > (3,):
     xrange = range
@@ -95,21 +96,21 @@ class UPlusPtg(BasePtg):
     ptg = 0x12
 
     def stringify(self, tokens, workbook):
-        return '+' + tokens.pop().stringify(tokens, workbook)
+        return '+' + tokens.pop().stringify(tokens, workbook).strip()
 
 
 class UMinusPtg(BasePtg):
     ptg = 0x13
 
     def stringify(self, tokens, workbook):
-        return '-' + tokens.pop().stringify(tokens, workbook)
+        return '-' + tokens.pop().stringify(tokens, workbook).strip()
 
 
 class PercentPtg(BasePtg):
     ptg = 0x14
 
     def stringify(self, tokens, workbook):
-        return tokens.pop().stringify(tokens, workbook) + '%'
+        return tokens.pop().stringify(tokens, workbook).strip() + '%'
 
 
 # Binary operators
@@ -119,8 +120,8 @@ class AddPtg(BasePtg):
     ptg = 0x03
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '+' + b
 
 
@@ -128,8 +129,8 @@ class SubstractPtg(BasePtg):
     ptg = 0x04
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '-' + b
 
 
@@ -137,8 +138,8 @@ class MultiplyPtg(BasePtg):
     ptg = 0x05
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '*' + b
 
 
@@ -146,8 +147,8 @@ class DividePtg(BasePtg):
     ptg = 0x06
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '/' + b
 
 
@@ -155,8 +156,8 @@ class PowerPtg(BasePtg):
     ptg = 0x07
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '^' + b
 
 
@@ -164,8 +165,8 @@ class ConcatPtg(BasePtg):
     ptg = 0x08
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '&' + b
 
 
@@ -173,8 +174,8 @@ class LessPtg(BasePtg):
     ptg = 0x09
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '<' + b
 
 
@@ -182,8 +183,8 @@ class LessEqualPtg(BasePtg):
     ptg = 0x0A
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '<=' + b
 
 
@@ -191,8 +192,8 @@ class EqualPtg(BasePtg):
     ptg = 0x0B
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '=' + b
 
 
@@ -200,8 +201,8 @@ class GreaterEqualPtg(BasePtg):
     ptg = 0x0C
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '>=' + b
 
 
@@ -209,8 +210,8 @@ class GreaterPtg(BasePtg):
     ptg = 0x0D
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '>' + b
 
 
@@ -218,8 +219,8 @@ class NotEqualPtg(BasePtg):
     ptg = 0x0E
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + '<>' + b
 
 
@@ -227,8 +228,8 @@ class IntersectionPtg(BasePtg):
     ptg = 0x0F
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + ' ' + b
 
 
@@ -236,8 +237,8 @@ class UnionPtg(BasePtg):
     ptg = 0x10
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + ',' + b
 
 
@@ -245,8 +246,8 @@ class RangePtg(BasePtg):
     ptg = 0x11
 
     def stringify(self, tokens, workbook):
-        b = tokens.pop().stringify(tokens, workbook)
-        a = tokens.pop().stringify(tokens, workbook)
+        b = tokens.pop().stringify(tokens, workbook).strip()
+        a = tokens.pop().stringify(tokens, workbook).strip()
         return a + ':' + b
 
 
@@ -553,14 +554,40 @@ class RefNPtg(ClassifiedPtg):
         self.col_rel = col_rel
 
     def stringify(self, tokens, workbook):
-        return self.cell_address(self.col, self.row, self.col_rel, self.row_rel)
+        anchor_row = formula.Formula.anchor_row
+        anchor_col = formula.Formula.anchor_col
+        return self.cell_address(self.col + anchor_col, self.row + anchor_row, self.col_rel, self.row_rel)
 
     @classmethod
     def read(cls, reader, ptg):
+        # the specification clearly states that we start with 8 bits
+        # followed by a location (which is row,col as int,short)
+        # however when we read the byte the row and col become nonsense
+        #
+        # in my example the row was 1048570 which is 2^20-6
+        #
+        # I would actually like it to be -6 from the example I used
+        #
+        # so count me confused
+        #
+        # ignored = reader.read_byte()
         row = reader.read_int()
         col = reader.read_short()
         row_rel = col & 0x8000 == 0x8000
         col_rel = col & 0x4000 == 0x4000
+
+        # I have seen value such as 1048570
+        # this was clearly -6
+        # 1048576 is 2^20 
+        # I will assume that numbers less than 2^19 are positive offsets
+        # and numbers greater than 2^19 are negative offsets
+        # however I can't find the specification of how RefNPtg is used
+
+        r1 = 0x00080000
+        r2 = 0x00100000
+
+        if row >= r1: row = row - r2
+
         return cls(row, col & 0x3FFF, not row_rel, not col_rel, ptg)
 
 
@@ -608,29 +635,25 @@ class NameXPtg(ClassifiedPtg):
         self.name_idx = name_idx
         self._reserved = reserved
 
-    def stringify(self, tokens, workbook):
-        sheet = None if self.sheet_idx == 0 else workbook.get_sheet_by_sheetId(self.sheet_idx)
-        if sheet is None:
-            try:
-                if self.name_idx <= 0:
-                    raise Exception("out of range")
-                name = workbook.udf_index[self.name_idx-1]
-                return name
-            except:
-                name = "UndefinedName[%s]" % self.name_idx
-                return name
+    def stringify(self, tokens, workbook, as_udf=False):
+        # we actually know that we are searching for a UDF in the context of VarFuncPtg
+        # can we use this information?
+        if self.name_idx <= 0:
+            raise Exception("name_idx %d out of range" % self.name_idx)
 
-        # this is very confusing - in some cases sheet_idx is not zero
-        # this could then either be a name defined in workbook.list_name
-        # or a UDF defined in workbook.udf_index
+        # at present we do not know how to use sheet_idx
+        # at first we thought that value=0 => UDF
+        # however this is not absolutely always the case
         #
-        # we have seen both cases...
-
+        # so we will drive the name lookup by the as_udf parameter
         try:
-            name = workbook.list_name[self.name_idx]
+            if as_udf:
+                name = workbook.udf_index[self.name_idx-1]
+            else:
+                name = work.list_names[self.name_idx-1]
             return name
         except:
-            name = "%s!UndefinedName[%s]" % (sheet.name, self.name_idx)
+            name = "UndefinedName[%s]" % self.name_idx
             return name
 
     @classmethod
@@ -830,7 +853,7 @@ class ParenPtg(BasePtg):
     ptg = 0x15
 
     def stringify(self, tokens, workbook):
-        return '(' + tokens.pop().stringify(tokens, workbook) + ')'
+        return '(' + tokens.pop().stringify(tokens, workbook).strip() + ')'
 
 
 class AttrPtg(BasePtg):
@@ -1005,13 +1028,25 @@ class FuncVarPtg(ClassifiedPtg):
             function_name = function_names[self.idx][0]
 
         args = list()
-        for i in xrange(self.argc):
+        argc = self.argc
+
+        if is_udf: argc -= 1 # the UDF is the last token to be popped
+        for i in xrange(argc):
             arg = tokens.pop().stringify(tokens, workbook)
             arg = "" if arg is None else arg.strip() # consistent with FuncPtg
             args.append(arg)
 
         if is_udf:
-            function_name = args.pop()
+            token = tokens.pop()
+            try:
+                # this will fail at once if the token is not NameXPtg
+                # the danger of calling the function is that the tokens
+                # might be consumed by the call - but the failure is when
+                # the calling sequence is invalid in which case nothing
+                # will get consumed
+                function_name = token.stringify(tokens, workbook, as_udf=True)
+            except:
+                function_name = token.stringify(tokens, workbook)
 
         # join with ',' instead of ', ' for consistency with openpyxl
         return '{}({})'.format(function_name, ','.join(reversed(args)))

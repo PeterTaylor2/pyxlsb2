@@ -19,6 +19,7 @@ class RecordReader(object):
 
         rt.PLACEHOLDER_NAME: recs.PlaceholderNameRecord,
         rt.ARR_FMLA:         recs.ArrayFormulaRecord,
+        rt.SHR_FMLA:         recs.SharedFormulaRecord,
 
         # Workbook part handlers
         rt.BEGIN_BOOK:       recs.SimpleRecord('Workbook'),
@@ -89,7 +90,8 @@ class RecordReader(object):
         rt.EXTERN_SHEET:         recs.ExternSheetRecord,
         rt.SUP_SELF:             recs.SimpleRecord('SupSelf'),
         rt.SUP_SAME:             recs.SimpleRecord('SupSame'),
-        rt.NAME:                 recs.Name
+        rt.NAME:                 recs.NameRecord,
+        rt.SUP_ADDIN:            recs.SupAddinRecord
     }
 
     def __init__(self, fp, enc=None):
