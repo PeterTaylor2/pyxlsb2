@@ -3,6 +3,7 @@ import sys
 import xml.etree.ElementTree as ElementTree
 from . import recordtypes as rt
 from .row import Row
+from .cell import Cell
 from .recordreader import RecordReader
 
 if sys.version_info > (3,):
@@ -73,6 +74,7 @@ class Worksheet(object):
         row = None
         row_num = -1
         self._fp.seek(self._data_offset, os.SEEK_SET)
+        future_cells = []
         for rectype, rec in RecordReader(self._fp):
             if rectype == rt.ROW_HDR and rec.r != row_num:
                 if row is not None:
@@ -82,6 +84,15 @@ class Worksheet(object):
                     yield Row(self, row_num)
                 row_num = rec.r
                 row = Row(self, row_num)
+
+                if future_cells:
+                    remaining_cells = []
+                    for cell in future_cells:
+                        if cell.row == row_num:
+                            row._add_cell_object(cell)
+                        else: remaining_cells.append(cell)
+                    future_cells = remaining_cells
+
             elif rectype == rt.CELL_ISST:
                 if rec.v is not None and rec.c is not None:
                     if 0 <= rec.v < len(self.workbook.stringtable._strings):
@@ -105,16 +116,46 @@ class Worksheet(object):
                 else:
                     raise Exception("mismatch between row and ARR_FMLA record: row_num: %d rec_row1: %d" % (row.num, rec.row1))
             elif rectype == rt.AC_BEGIN:
+                # The BrtACBegin record specifies the beginning of an alternate content block as specified by future record
                 pass # debug point
             elif rectype == rt.AC_END:
+                # The BrtACEnd record specifies the end of an alternate content block as specified by future record
                 pass # debug point
             elif rectype == rt.CELL_META:
+                # we investigated this type but it doesn't appear relevant
                 pass # debug point
             elif rectype == rt.RW_DESCENT:
+                # The BrtRwDescent record specifies the vertical distance in pixels from the bottom of the cell to the
+                # typographical baseline of the cell contents for the current row
                 pass # debug point
             elif rectype == rt.SHR_FMLA:
-                pass # debug point
+                # a shared formula is the same formula for one or more adjacent cells
+                #
+                # the formula is typically represented using RefNPtg so the cells
+                # are defined relative to an anchor cell - we had to change the Formula
+                # class to track the anchor cell
+                #
+                # we may have multiple columns in this row (rec.col1 to rec.col2)
+                # and also we may have cells for subsequent rows (rec.row1 to rec.row2)
+                #
+                # since this record type defines the formula we use override=True
+                # hence any value cell which appears subsequently is discarded
+                #
+                # we put the cells for subsequent rows into future_cells to be handled
+                # when we start the new row
+                frow = rec.row1
+                while frow <= rec.row2:
+                    fcol = rec.col1
+                    while fcol <= rec.col2:
+                        cell = Cell(frow, fcol, formula=rec.formula, override=True)
+                        if frow == row.num:
+                            row._add_cell_object(cell)
+                        else:
+                            future_cells.append(cell)
+                        fcol += 1
+                    frow += 1
             else:
+                # print("RecorderReader: UNKNOWN", rectype, rec)
                 pass # debug point
 
             # we appear to ignore five rectype's as shown above
