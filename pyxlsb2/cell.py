@@ -50,7 +50,7 @@ class Cell(DeprecatedCellMixin):
     """A cell in a worksheet.
 
     Attributes:
-        row (Row): The containing row.
+        row (int): The containing row.
         col (int): The column index for this cell.
         value (mixed): The cell value.
         formula (bytes): The formula PTG bytes.
@@ -74,7 +74,7 @@ class Cell(DeprecatedCellMixin):
     @property
     def row_num(self):
         """The row number of this cell."""
-        return self.row.num
+        return self.row#.num
 
     @property
     def string_value(self):

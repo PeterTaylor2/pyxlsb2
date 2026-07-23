@@ -23,20 +23,30 @@ class Row(object):
         if key in self._cells:
             return self._cells[key]
         else:
-            return Cell(self, key, value=None)
+            return Cell(self.num, key, value=None)
 
     def __iter__(self):
         for i in xrange(self.__len__()):
             yield self.__getitem__(i)
 
     def _add_cell(self, col, *args, **kwargs):
-        c = Cell(self, col, *args, **kwargs)
+        c = Cell(self.num, col, *args, **kwargs)
 
-        if col in self._cells and not c.override:
-            print("ignoring same column %d already in row %d" % (col, self.num))
-            return self._cells[col] # return what is already there
+        return self._add_cell_object(c)
 
-        self._cells[col] = c
-        if col >= self._cols:
-            self._cols = col + 1
-        return c
+    def _add_cell_object(self, c):
+        if c.row == self.num:
+            col = c.col
+            if col in self._cells and not c.override:
+                # print("ignoring same column %d already in row %d" % (col, self.num))
+                return None
+
+            self._cells[col] = c
+            if col >= self._cols:
+                self._cols = col + 1
+
+            return c # indicates that we did add the cell
+
+        else:
+            # print("ignoring cell with row %d different to this row %d" % (c.row, self.num))
+            return None
