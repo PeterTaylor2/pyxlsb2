@@ -24,7 +24,9 @@ class Formula(object):
 
     def stringify(self, workbook):
         tokens = self._tokens[:]
-        return '' if not tokens else tokens.pop().stringify(tokens, workbook)
+        formula = '' if not tokens else tokens.pop().stringify(tokens, workbook)
+        if formula is not None: formula = formula.strip()
+        return formula
 
     @classmethod
     def parse(cls, data, anchor_row=None, anchor_col=None):
