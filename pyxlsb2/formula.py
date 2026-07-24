@@ -25,7 +25,8 @@ class Formula(object):
     def stringify(self, workbook):
         tokens = self._tokens[:]
         formula = '' if not tokens else tokens.pop().stringify(tokens, workbook)
-        if formula is not None: formula = formula.strip()
+        if formula is not None:
+            formula = formula.strip()
         return formula
 
     @classmethod

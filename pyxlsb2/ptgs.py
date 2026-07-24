@@ -1030,7 +1030,9 @@ class FuncVarPtg(ClassifiedPtg):
         args = list()
         argc = self.argc
 
-        if is_udf: argc -= 1 # the UDF is the last token to be popped
+        if is_udf:
+            argc -= 1 # the UDF is the last token to be popped
+
         for i in xrange(argc):
             arg = tokens.pop().stringify(tokens, workbook)
             arg = "" if arg is None else arg.strip() # consistent with FuncPtg
@@ -1038,6 +1040,12 @@ class FuncVarPtg(ClassifiedPtg):
 
         if is_udf:
             token = tokens.pop()
+            # AttrPtg is some sort of formatting but only adds white space
+            # however it then continues to fetch tokens and this interferes
+            # with our required use of as_udf
+            while isinstance(token, AttrPtg):
+                token = tokens.pop()
+
             try:
                 # this will fail at once if the token is not NameXPtg
                 # the danger of calling the function is that the tokens
