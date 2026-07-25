@@ -65,9 +65,10 @@ class SheetRecord(BaseRecord):
         self.sheetId = sheetId
         self.rId = rId
         self.name = name
+        # the next three fields are added later when we add the SheetRecord to the Workbook
         self.type = None
         self.loc = None
-        self.id = 0
+        self.id = None
 
     @classmethod
     def read(cls, reader, rectype, reclen):

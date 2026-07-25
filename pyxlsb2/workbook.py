@@ -49,15 +49,15 @@ class Workbook(object):
 
         workbook_rels = self._pkg.get_workbook_rels()
         with self._pkg.get_workbook_part() as f:
-            counter = 0
+            sheet_counter = 0
             supAddin = None
             for rectype, rec in RecordReader(f):
                 if rectype == rt.WB_PROP:
                     self.props = rec
                 elif rectype == rt.BUNDLE_SH:
                     rec.type, rec.loc = self.get_sheet_info(workbook_rels, rec.rId)
-                    rec.id = counter
-                    counter +=1
+                    rec.id = sheet_counter
+                    sheet_counter +=1
                     self.sheets.append(rec)
                 elif rectype == rt.BEGIN_EXTERNALS:
                     # https://docs.microsoft.com/en-us/openspecs/office_file_formats/ms-xlsb/e1620ef9-0809-478f-8c96-6a587bec09a4
@@ -76,8 +76,19 @@ class Workbook(object):
                             supAddin = None
 
                 elif rectype == rt.NAME:
-                    self.list_names.append(rec.name)
-                    self.defined_names[rec.name] = rec
+                    if rec.itab == 0xFFFFFFFF:
+                        # the name has workbook scope
+                        name = rec.name
+                    else:
+                        # the name only has worksheet scope and rec.itab indicates
+                        # the worksheet from the list of sheets
+                        if rec.itab >= 0 and rec.itab < len(self.sheets):
+                            sheet = self.sheets[rec.itab]
+                            name = "%s!%s" % (sheet.name, rec.name)
+                        else:
+                            name = "<undefined sheet>!" + rec.name
+                    self.list_names.append(name)
+                    self.defined_names[name] = rec
                     rec.formula = Formula.parse(rec.formula_raw).stringify(self)
                 elif rectype == rt.PLACEHOLDER_NAME:
                     if supAddin is not None:
