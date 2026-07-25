@@ -38,6 +38,7 @@ class Workbook(object):
     def _parse(self):
         self.props = None
         self.sheets = list()
+        self.sheet_index = dict()
         self.stringtable = None
         self.styles = None
         self.external_sheet_ids = None
@@ -58,6 +59,9 @@ class Workbook(object):
                     rec.type, rec.loc = self.get_sheet_info(workbook_rels, rec.rId)
                     rec.id = sheet_counter
                     sheet_counter +=1
+                    if rec.sheetId in self.sheet_index:
+                        raise Exception("sheet index %d for %s is already defined" % (rec.sheetId, rec))
+                    self.sheet_index[rec.sheetId] = rec
                     self.sheets.append(rec)
                 elif rectype == rt.BEGIN_EXTERNALS:
                     # https://docs.microsoft.com/en-us/openspecs/office_file_formats/ms-xlsb/e1620ef9-0809-478f-8c96-6a587bec09a4
@@ -166,15 +170,6 @@ class Workbook(object):
         else:
             rels_fp = None
         return Worksheet(self, self.sheets[idx], fp, rels_fp)
-
-    def get_sheet_by_sheetId(self, sheetId):
-        """Get a SheetRecord by sheetId rather by position within the list.
-
-        Returns None on failure.
-        """
-        for sheet in self.sheets:
-            if sheet.sheetId == sheetId: return sheet
-        return None
 
     def get_sheet_by_name(self, name, with_rels=False):
         """Get a boundsheet by its name.
