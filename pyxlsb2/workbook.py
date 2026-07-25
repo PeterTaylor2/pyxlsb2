@@ -45,7 +45,7 @@ class Workbook(object):
         self.externals = None
         self.defined_names = {}
         self.list_names = []
-        self.udf_index = []
+        self.list_udfs = []
 
         workbook_rels = self._pkg.get_workbook_rels()
         with self._pkg.get_workbook_part() as f:
@@ -84,7 +84,7 @@ class Workbook(object):
                     self.defined_names[name] = rec
                     rec.formula = Formula.parse(rec.formula_raw).stringify(self)
                 elif rectype == rt.PLACEHOLDER_NAME:
-                    self.udf_index.append(rec.name)
+                    self.list_udfs.append(rec.name)
                 else: # there are too many rectype's that we ignore to enumerate them here
                     pass # debug point
 

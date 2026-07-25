@@ -657,7 +657,7 @@ class NameXPtg(ClassifiedPtg):
         # so we will drive the name lookup by the as_udf parameter
         try:
             if as_udf:
-                name = workbook.udf_index[self.name_idx-1]
+                name = workbook.list_udfs[self.name_idx-1]
             else:
                 name = workbook.list_names[self.name_idx-1]
             if DEBUG_NAMES:
