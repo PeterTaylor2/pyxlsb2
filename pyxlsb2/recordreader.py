@@ -90,8 +90,7 @@ class RecordReader(object):
         rt.EXTERN_SHEET:         recs.ExternSheetRecord,
         rt.SUP_SELF:             recs.SimpleRecord('SupSelf'),
         rt.SUP_SAME:             recs.SimpleRecord('SupSame'),
-        rt.NAME:                 recs.NameRecord,
-        rt.SUP_ADDIN:            recs.SupAddinRecord
+        rt.NAME:                 recs.NameRecord
     }
 
     def __init__(self, fp, enc=None):

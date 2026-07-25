@@ -384,17 +384,6 @@ class FormatRecord(BaseRecord):
         code = reader.read_string()
         return cls(fid, code)
 
-# instead of simple since we want to add the placeholder names to this object
-class SupAddinRecord(BaseRecord):
-    brt = rt.SUP_ADDIN
-
-    def __init__(self):
-        self.names = []
-
-    @classmethod
-    def read(cls, reader, rectype, reclen):
-        return cls()
-
 class PlaceholderNameRecord(BaseRecord):
     brt = rt.PLACEHOLDER_NAME
 
