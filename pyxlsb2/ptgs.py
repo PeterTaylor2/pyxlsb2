@@ -581,23 +581,43 @@ class RefNPtg(ClassifiedPtg):
 
     @classmethod
     def read(cls, reader, ptg):
-        # the specification clearly states that we start with 8 bits
+        # the specification seems to state that we start with 8 bits
         # followed by a location (which is row,col as int,short)
-        # however when we read the byte the row and col become nonsense
         #
-        # in my example the row was 1048570 which is 2^20-6
+        # however when we read the byte (ignored = reader.read_byte() commented out below),
+        # then row and col become nonsense
         #
-        # I would actually like it to be -6 from the example I used
+        # this is from the Microsoft documentation for PtgRefN
         #
-        # so count me confused
+        # ptg (5 bits):  Reserved. This value MUST be 0x0C.
+        # A - type (2 bits):  A PtgDataType (section 2.5.98.36) structure that specifies the data type for the value of this Ptg (section 2.5.98.16).
+        # B - reserved (1 bit):  This value MUST be 0, and MUST be ignored.
+        # loc (6 bytes): An RgceLocRel structure that specifies the referenced cell.
         #
+        # however further up in the documentation it says:
+        #
+        # The PtgRefN operand (section 2.5.98.88) specifies a reference to a single cell as an RgceLocRel (section 2.5.98.92).
+        #
+        # Hence the comment higher up just says that PtgRefN has the location and doesn't mention ptg,A,B fields (which add up to one byte)
+        # This seems to be the reality
+        #
+        # anyway the code below matches the actual format of the data
+        #
+        # it is possible that since we only appear to use 2^20 for row
+        # that we should mask row in the same way that we are masking col
+        # just in case the ignored byte is actually part of the row and
+        # has some non-zero content
+        #
+        # the suggested mask for row is 0x000FFFFF which when used matches
+        # test results without the mask
+
         # ignored = reader.read_byte()
         row = reader.read_int()
         col = reader.read_short()
         row_rel = col & 0x8000 == 0x8000
         col_rel = col & 0x4000 == 0x4000
 
-        return cls(row, col & 0x3FFF, not row_rel, not col_rel, ptg)
+        return cls(row & 0x000FFFFF, col & 0x3FFF, not row_rel, not col_rel, ptg)
 
 
 class AreaNPtg(ClassifiedPtg):
@@ -651,10 +671,24 @@ class NameXPtg(ClassifiedPtg):
             raise Exception("name_idx %d out of range" % self.name_idx)
 
         # at present we do not know how to use sheet_idx
-        # at first we thought that value=0 => UDF
-        # however this is not absolutely always the case
+        #
+        # at first we thought that sheet_idx=0 => UDF
+        # this does appear to be true, but the inverse
+        # is not always the case
+        #
+        # we have seen with extremely large and complex workbooks
+        # that sometimes sheet_idx can be greater than zero
+        # for names which are clearly UDFs when you look at the
+        # actual spreadsheet
+        #
+        # we set the DEBUG_NAMES flag to True and this showed
+        # there was no clear logic when self.sheet_idx is non-zero
+        # to say when to use list_udfs or list_names
         #
         # so we will drive the name lookup by the as_udf parameter
+        # but that means we need to take special care in the FuncVarPtg
+        # class to set as_udf when using stringify for the actual
+        # function name
         try:
             if as_udf:
                 name = workbook.list_udfs[self.name_idx-1]

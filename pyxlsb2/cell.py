@@ -74,7 +74,7 @@ class Cell(DeprecatedCellMixin):
     @property
     def row_num(self):
         """The row number of this cell."""
-        return self.row#.num
+        return self.row
 
     @property
     def string_value(self):
