@@ -6,6 +6,7 @@ from . import formula
 if sys.version_info > (3,):
     xrange = range
 
+DEBUG_NAMES = False
 
 class BasePtg(object):
     def __repr__(self):
@@ -394,14 +395,25 @@ class NamePtg(ClassifiedPtg):
         self._reserved = reserved
 
     def stringify(self, tokens, workbook):
-        try:
-            defined = workbook.defined_names[workbook.list_names[self.idx - 1]]
-        except:
+        if self.idx <= 0 or self.idx > len(workbook.list_names):
+            print("WARNING: Index (%d) out of range for NameRecord lookup" % self.idx)
             return "UndefinedName[%d]" % self.idx
+
+        name = workbook.list_names[self.idx-1]
+        defined = workbook.defined_names[name]
+
+        # since it possible for the name not to have global scope we will return the
+        # qualified name from workbook.list_names rather than the unqualified name
+        # from workbook.defined_names
+
+        if DEBUG_NAMES:
+            if name != defined.name:
+                # this arises when the name only has worksheet scope
+                print("NamePtg: idx=%d name=%s\n       : %s" % (self.idx, name, defined))
 
         # don't return the formula because for a named range we want the name
         # rather than the cell address which will not be very informative
-        return defined.name
+        return name
 
     @classmethod
     def read(cls, reader, ptg):
@@ -648,6 +660,12 @@ class NameXPtg(ClassifiedPtg):
                 name = workbook.udf_index[self.name_idx-1]
             else:
                 name = workbook.list_names[self.name_idx-1]
+            if DEBUG_NAMES:
+                if self.sheet_idx in workbook.sheet_index:
+                    sheetName = workbook.sheet_index[self.sheet_idx].name
+                else:
+                    sheetName = None
+                print("NameXPtg: %-5s %d:%d %s %s" % (as_udf, self.name_idx, self.sheet_idx, name, sheetName))
             return name
         except:
             name = "UndefinedName[%s]" % self.name_idx
