@@ -548,15 +548,24 @@ class RefNPtg(ClassifiedPtg):
 
     def __init__(self, row, col, row_rel, col_rel, *args, **kwargs):
         super(RefNPtg, self).__init__(*args, **kwargs)
-        self.row = row
-        self.col = col
+
+        # large values of row/col should be converted to negative values
+
+        r1 = 0x00080000
+        r2 = 0x00100000
+        c1 = 0x2000
+        c2 = 0x4000
+
+        self.row = row if row <= r1 else row - r2
+        self.col = col if col <= c1 else col - c2
         self.row_rel = row_rel
         self.col_rel = col_rel
 
     def stringify(self, tokens, workbook):
-        anchor_row = formula.Formula.anchor_row
-        anchor_col = formula.Formula.anchor_col
-        return self.cell_address(self.col + anchor_col, self.row + anchor_row, self.col_rel, self.row_rel)
+        row = self.row if self.row_rel else self.row + formula.Formula.anchor_row
+        col = self.col if self.col_rel else self.col + formula.Formula.anchor_col
+
+        return self.cell_address(col, row, self.col_rel, self.row_rel)
 
     @classmethod
     def read(cls, reader, ptg):
@@ -575,18 +584,6 @@ class RefNPtg(ClassifiedPtg):
         col = reader.read_short()
         row_rel = col & 0x8000 == 0x8000
         col_rel = col & 0x4000 == 0x4000
-
-        # I have seen value such as 1048570
-        # this was clearly -6
-        # 1048576 is 2^20 
-        # I will assume that numbers less than 2^19 are positive offsets
-        # and numbers greater than 2^19 are negative offsets
-        # however I can't find the specification of how RefNPtg is used
-
-        r1 = 0x00080000
-        r2 = 0x00100000
-
-        if row >= r1: row = row - r2
 
         return cls(row, col & 0x3FFF, not row_rel, not col_rel, ptg)
 
