@@ -1,5 +1,9 @@
 from . import ptgs
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 try:
     from .cdatareader import DataReader
 except ImportError:
@@ -84,5 +88,8 @@ class TokenReader(object):
         if ptg is None:
             raise StopIteration
         base = ((ptg | 0x20) if ptg & 0x40 == 0x40 else ptg) & 0x3F
-        res = self._ptgs.get(base, self._default_ptg).read(self._reader, ptg)
+        cls = self._ptgs.get(base, self._default_ptg)
+        _logger.debug("Reading %s" % cls)
+        res = cls.read(self._reader, ptg)
+        _logger.debug("Output %s" % res)
         return res
