@@ -365,24 +365,24 @@ class ArrayPtg(ClassifiedPtg):
         super(ArrayPtg, self).__init__(*args, **kwargs)
         self.cols = cols
         self.rows = rows
-        self.values = values
+        self.values = values # actually not the values
+
+    # I think to get this to work we need to put the extra_data from the Formula
+    # into tokens since otherwise we cannot resolve the content of ArrayPtg
+    def stringify(self, tokens, workbook):
+        return "{cols=%d rows=%d}" % (self.cols, self.rows)
 
     @classmethod
     def read(cls, reader, ptg):
-        cols = reader.read_byte()
-        if cols == 0:
-            cols = 256
-        rows = reader.read_short()
-        values = list()
-        for i in xrange(cols * rows):
-            flag = reader.read_byte()
-            value = None
-            if flag == 0x01:
-                value = reader.read_double()
-            elif flag == 0x02:
-                size = reader.read_short()
-                value = reader.read_string(size=size)
-            values.append(value)
+        # this is all heuristics
+        # we see two short integers at the beginning giving cols,rows
+        # then we see six \x00
+        # then we see mysterious content for 4 bytes
+        cols = reader.read_short() + 1
+        rows = reader.read_short() + 1
+        zeroes = reader.skip(6)
+        values = reader.read(4)
+
         return cls(cols, rows, values, ptg)
 
 

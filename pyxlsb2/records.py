@@ -398,7 +398,7 @@ class PlaceholderNameRecord(BaseRecord):
 class ArrayFormulaRecord(BaseRecord):
     brt = rt.ARR_FMLA
 
-    def __init__(self, row1, row2, col1, col2, flag, style, formula_len, formula):
+    def __init__(self, row1, row2, col1, col2, flag, style, formula_len, formula, extra_data):
         self.row1 = row1
         self.row2 = row2
         self.col1 = col1
@@ -407,6 +407,7 @@ class ArrayFormulaRecord(BaseRecord):
         self.style = style
         self.formula_len = formula_len
         self.formula = formula
+        self.extra_data = extra_data
 
     @classmethod
     def read(cls, reader, rectype, reclen):
@@ -422,7 +423,10 @@ class ArrayFormulaRecord(BaseRecord):
         formula = reader.read(formula_len)
         style = reader.read_int()
 
-        return cls(row1, row2, col1, col2, flag, style, formula_len, formula)
+        size_read = 24 + formula_len + 1
+        extra_data = reader.read(reclen) # overflow just discards stuff
+
+        return cls(row1, row2, col1, col2, flag, style, formula_len, formula, extra_data)
 
 # the specification suggests that the format is similar to SHR_FMLA
 # SHR_FMLA has an extra byte before the formula section which we don't want
