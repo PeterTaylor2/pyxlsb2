@@ -17,7 +17,7 @@ class TokenReader(object):
 
         # Binary operators
         ptgs.AddPtg.ptg:          ptgs.AddPtg,
-        ptgs.SubstractPtg.ptg:    ptgs.SubstractPtg,
+        ptgs.SubtractPtg.ptg:     ptgs.SubtractPtg,
         ptgs.MultiplyPtg.ptg:     ptgs.MultiplyPtg,
         ptgs.DividePtg.ptg:       ptgs.DividePtg,
         ptgs.PowerPtg.ptg:        ptgs.PowerPtg,

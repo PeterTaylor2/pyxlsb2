@@ -126,7 +126,7 @@ class AddPtg(BasePtg):
         return a + '+' + b
 
 
-class SubstractPtg(BasePtg):
+class SubtractPtg(BasePtg):
     ptg = 0x04
 
     def stringify(self, tokens, workbook):
