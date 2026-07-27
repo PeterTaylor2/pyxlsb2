@@ -27,12 +27,14 @@ def SimpleRecord(name):
 class UnknownRecord(BaseRecord):
     brt = 0xFFFF
 
-    def __init__(self, rectype):
+    def __init__(self, rectype, data):
         self.brt = rectype
+        self.data = data
 
     @classmethod
     def read(cls, reader, rectype, reclen):
-        return cls(rectype)
+        data = reader.read(reclen)
+        return cls(rectype, data)
 
 
 class WorkbookPropertiesRecord(BaseRecord):
