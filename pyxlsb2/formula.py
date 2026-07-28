@@ -1,6 +1,7 @@
 from pyxlsb2.records import FormulaCellRecord
 
 from .tokenreader import TokenReader
+from .ptgs import UnknownPtg
 
 import logging
 
@@ -18,8 +19,9 @@ class Formula(object):
     anchor_row=0
     anchor_col=0
 
-    def __init__(self, tokens):
-        self._tokens = list(tokens)
+    def __init__(self, tokens, parse_error=None):
+        self._tokens = tokens
+        self.parse_error = parse_error
 
     def __repr__(self):
         return 'Formula({})'.format(self._tokens)
@@ -28,6 +30,8 @@ class Formula(object):
         return self.stringify()
 
     def stringify(self, workbook):
+        if self.parse_error is not None:
+            return "PARSE_ERROR: %s" % self.parse_error
         tokens = self._tokens[:]
         formula = '' if not tokens else tokens.pop().stringify(tokens, workbook)
         if formula is not None:
@@ -40,4 +44,20 @@ class Formula(object):
         if anchor_row is not None: Formula.anchor_row = anchor_row
         if anchor_col is not None: Formula.anchor_col = anchor_col
         _logger.debug("Parsing formula at row=%s col=%s data=%s" % (anchor_row, anchor_col, data))
-        return cls(TokenReader(data))
+
+        tokens = list(TokenReader(data))
+
+        parse_error = None
+        for token in tokens:
+            if isinstance(token, UnknownPtg):
+                _logger.warning("Parsing formula at row=%s col=%s data=%s resulted in UnknownPtg's")
+                parse_error = "Unknown tokens found when parsing formula"
+                break
+
+        if parse_error is not None:
+            count = 0
+            for token in tokens:
+                count += 1
+                _logger.warning("%02d: %s" % (count, token))
+
+        return cls(tokens, parse_error=parse_error)
