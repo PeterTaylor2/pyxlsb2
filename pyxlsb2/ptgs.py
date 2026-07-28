@@ -3,10 +3,12 @@ from enum import Enum
 from . import recordtypes as rt
 from . import formula
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 if sys.version_info > (3,):
     xrange = range
-
-DEBUG_NAMES = False
 
 class BasePtg(object):
     def __repr__(self):
@@ -396,7 +398,7 @@ class NamePtg(ClassifiedPtg):
 
     def stringify(self, tokens, workbook):
         if self.idx <= 0 or self.idx > len(workbook.list_names):
-            print("WARNING: Index (%d) out of range for NameRecord lookup" % self.idx)
+            _logger.warning("Index (%d) out of range for NameRecord lookup" % self.idx)
             return "UndefinedName[%d]" % self.idx
 
         name = workbook.list_names[self.idx-1]
@@ -406,10 +408,9 @@ class NamePtg(ClassifiedPtg):
         # qualified name from workbook.list_names rather than the unqualified name
         # from workbook.defined_names
 
-        if DEBUG_NAMES:
-            if name != defined.name:
-                # this arises when the name only has worksheet scope
-                print("NamePtg: idx=%d name=%s\n       : %s" % (self.idx, name, defined))
+        if name != defined.name:
+            # this arises when the name only has worksheet scope
+            _logger.debug("NamePtg: idx=%d name=%s\n       : %s" % (self.idx, name, defined))
 
         # don't return the formula because for a named range we want the name
         # rather than the cell address which will not be very informative
@@ -689,17 +690,24 @@ class NameXPtg(ClassifiedPtg):
         # but that means we need to take special care in the FuncVarPtg
         # class to set as_udf when using stringify for the actual
         # function name
+
         try:
             if as_udf:
                 name = workbook.list_udfs[self.name_idx-1]
             else:
                 name = workbook.list_names[self.name_idx-1]
-            if DEBUG_NAMES:
-                if self.sheet_idx in workbook.sheet_index:
-                    sheetName = workbook.sheet_index[self.sheet_idx].name
-                else:
-                    sheetName = None
-                print("NameXPtg: %-5s %d:%d %s %s" % (as_udf, self.name_idx, self.sheet_idx, name, sheetName))
+
+            if _logger.isEnabledFor(logging.INFO):
+                # which is more expensive - checking whether we are enabled for INFO messages
+                # or preparing the INFO message
+                if (as_udf and self.sheet_idx != 0) or (not as_udf and self.sheet_idx == 0):
+                    # these are the cases when our intuition as to the meaning of sheet_idx failed us
+                    if self.sheet_idx in workbook.sheet_index:
+                        sheetName = workbook.sheet_index[self.sheet_idx].name
+                    else:
+                        sheetName = None
+                    _logger.info("NameXPtg: %-5s %d:%d %s %s" % (as_udf, self.name_idx, self.sheet_idx, name, sheetName))
+
             return name
         except:
             name = "UndefinedName[%s]" % self.name_idx
@@ -742,7 +750,7 @@ class Ref3dPtg(ClassifiedPtg):
                 address = cell_add
 
         if address is None:
-            print("Ref3dPtg External Address Not Supported {0} {1} {2}".format(cell_add, first_sheet_idx, last_sheet_idx))
+            _logger.warning("Ref3dPtg External Address Not Supported {0} {1} {2}".format(cell_add, first_sheet_idx, last_sheet_idx))
         #    raise NotImplementedError('External address not supported')
 
         return address
@@ -807,7 +815,7 @@ class Area3dPtg(ClassifiedPtg):
                 address = "'{}'!{}".format(workbook.sheets[first_sheet_idx].name , first + ':' + last)
 
         if address is None:
-            print("AreaPtg External Address Not Supported {0}:{1} {2} {3}".format(cell_add_first, cell_add_last, first_sheet_idx, last_sheet_idx))
+            _logger.warning("AreaPtg External Address Not Supported {0}:{1} {2} {3}".format(cell_add_first, cell_add_last, first_sheet_idx, last_sheet_idx))
             #raise NotImplementedError('External address not supported')
 
         return address
@@ -956,6 +964,22 @@ class AttrPtg(BasePtg):
     def read(cls, reader, ptg):
         flags = reader.read_byte()
         data = reader.read_short()
+
+        # for the CHOOSE mode there is some extra data
+        # we need to read it else the token stream gets out of synch
+        # we don't know what to do with it so we will log it and throw it away
+        #
+        # the specification was checked and it was only CHOOSE mode that seemed
+        # to consume the extra data
+
+        # https://learn.microsoft.com/en-us/openspecs/office_file_formats/ms-xlsb/808949eb-8985-4a96-9134-0aacd522b29d
+
+        if flags == 0x04 and data >= 0:
+            extras = []
+            for i in range(data+1):
+                extras.append(reader.read_short())
+            _logger.info("Ignoring extra data for AttrPtg with CHOOSE mode: %s" % extras)
+
         return cls(flags, data)
 
 
