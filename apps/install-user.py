@@ -119,7 +119,7 @@ if __name__ == "__main__":
     import getopt
 
     home = os.path.dirname(os.path.abspath(__file__))
-    src = os.path.join(home, "pyxlsb2")
+    src = os.path.join(os.path.dirname(home), "pyxlsb2")
     dst = get_target()
 
     try:
