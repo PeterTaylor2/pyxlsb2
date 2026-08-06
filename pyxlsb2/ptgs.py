@@ -362,33 +362,61 @@ class NumberPtg(BasePtg):
         value = reader.read_double()
         return cls(value)
 
-
 class ArrayPtg(ClassifiedPtg):
     ptg = 0x20
 
-    def __init__(self, cols, rows, values, *args, **kwargs):
+    def __init__(self, rows, cols, values, *args, **kwargs):
         super(ArrayPtg, self).__init__(*args, **kwargs)
-        self.cols = cols
         self.rows = rows
-        self.values = values # actually not the values
+        self.cols = cols
+        self.values = values
 
-    # I think to get this to work we need to put the extra_data from the Formula
-    # into tokens since otherwise we cannot resolve the content of ArrayPtg
     def stringify(self, tokens, workbook):
-        return "{cols=%d rows=%d}" % (self.cols, self.rows)
+        rows = []
+        for r in range(self.rows):
+            row = []
+            for c in range(self.cols):
+                pos = r*self.cols + c
+                ptg = self.values[pos]
+                row.append(ptg.stringify([], None))
+            rows.append(",".join(row))
+        return "{" + ";".join(rows) + "}"
 
     @classmethod
     def read(cls, reader, ptg):
-        # this is all heuristics
-        # we see two short integers at the beginning giving cols,rows
-        # then we see six \x00
-        # then we see mysterious content for 4 bytes
-        cols = reader.read_short() + 1
-        rows = reader.read_short() + 1
-        zeroes = reader.skip(6)
-        values = reader.read(4)
+        reader.skip(14)
 
-        return cls(cols, rows, values, ptg)
+        # the actual data for ArrayPtg is held in the extra_data from the formula
+        # from which this ArrayPtg is embedded - we need to get this data now
+        # rather than later since the stringification is performed in reverse
+        # order whereas the extra_data was written in sequential order
+        #
+        # this matters if there is more than one ArrayPtg in the formula
+        #
+        # formula.Formula.fxd_reader is a DataReader so as we read from it
+        # the data pointer moves forward
+        if  formula.Formula.fxd_reader is None:
+            raise Exception("Formula does not have an fxd_reader")
+
+        rows = formula.Formula.fxd_reader.read_int()
+        cols = formula.Formula.fxd_reader.read_int()
+        size = rows * cols
+        values = []
+        for _ in range(size):
+            vtype = formula.Formula.fxd_reader.read_byte()
+            if vtype == 0x00:  # double
+                value = NumberPtg.read(formula.Formula.fxd_reader, vtype)
+            elif vtype == 0x01:  # string
+                value = StringPtg.read(formula.Formula.fxd_reader, vtype)
+            elif vtype == 0x02:  # boolean
+                value = BooleanPtg.read(formula.Formula.fxd_reader, vtype)
+            elif vtype == 0x03:  # error
+                value = ErrorPtg.read(formula.Formula.fxd_reader, vtype)
+                formula.Formula.fxd_reader.skip(3)
+            else:
+                raise ValueError(f"Unknown value type: {vtype}")
+            values.append(value)
+        return cls(rows, cols, values, ptg)
 
 
 class NamePtg(ClassifiedPtg):
