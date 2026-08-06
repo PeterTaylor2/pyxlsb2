@@ -575,8 +575,8 @@ class RefNPtg(ClassifiedPtg):
         self.col_rel = col_rel
 
     def stringify(self, tokens, workbook):
-        row = self.row if self.row_rel else self.row + formula.Formula.anchor_row
-        col = self.col if self.col_rel else self.col + formula.Formula.anchor_col
+        row = self.row if self.row_rel else self.row + formula.Formula.anchor_cell.row
+        col = self.col if self.col_rel else self.col + formula.Formula.anchor_cell.col
 
         return self.cell_address(col, row, self.col_rel, self.row_rel)
 

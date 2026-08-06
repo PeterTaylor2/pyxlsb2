@@ -52,7 +52,7 @@ def parse_xlsb(ffn, ofn, show_values):
                                 if show_values:
                                     fp.write("%s!%s:{%s}\n" % (sname, cname, cell.value))
                             else:
-                                formula = pyxlsb2.formula.Formula.parse(cell.formula, cell.row, cell.col).stringify(wb)
+                                formula = pyxlsb2.formula.Formula.parse(cell.formula, anchor_cell=cell).stringify(wb)
                                 if formula.startswith("RC("): continue # indicates shared formula
                                 fp.write("%s!%s=%s\n" % (sname, cname, formula))
                         except Exception as e:

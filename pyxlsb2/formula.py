@@ -2,6 +2,7 @@ from pyxlsb2.records import FormulaCellRecord
 
 from .tokenreader import TokenReader
 from .ptgs import UnknownPtg
+from .datareader import DataReader
 
 import logging
 
@@ -14,10 +15,10 @@ class Formula(object):
     # we have a choice - put the anchor_row and anchor_col into the workbook
     # or define global variables
     #
-    # this is fine as long we don't have nested formula objects
+    # this is fine as long we don't have nested formula objects (which we don't)
 
-    anchor_row=0
-    anchor_col=0
+    anchor_cell = None
+    fxd_reader = None # DataReader for anchor_cell.fxd
 
     def __init__(self, tokens, parse_error=None):
         self._tokens = tokens
@@ -40,10 +41,12 @@ class Formula(object):
         return formula
 
     @classmethod
-    def parse(cls, data, anchor_row=None, anchor_col=None):
-        if anchor_row is not None: Formula.anchor_row = anchor_row
-        if anchor_col is not None: Formula.anchor_col = anchor_col
-        _logger.debug("Parsing formula at row=%s col=%s data=%s" % (anchor_row, anchor_col, data))
+    def parse(cls, data, anchor_cell=None):
+        if anchor_cell is not None:
+           Formula.anchor_cell = anchor_cell
+           Formula.fxd_reader = DataReader(anchor_cell.fxd)
+        if anchor_cell is not None:
+            _logger.debug("Parsing formula at row=%s col=%s data=%s" % (anchor_cell.row, anchor_cell.col, data))
 
         tokens = list(TokenReader(data))
 
@@ -61,3 +64,4 @@ class Formula(object):
                 _logger.warning("%02d: %s" % (count, token))
 
         return cls(tokens, parse_error=parse_error)
+

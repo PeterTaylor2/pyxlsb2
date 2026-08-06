@@ -101,9 +101,14 @@ class Worksheet(object):
                         value = rec.v
                     row._add_cell(rec.c, value, rec.f, rec.style)
 
-            elif rectype >= rt.CELL_BLANK and rectype <= rt.FMLA_ERROR:
+            elif rectype >= rt.CELL_BLANK and rectype < rt.FMLA_STRING:
                 if rec.v is not None and rec.c is not None:
                     row._add_cell(rec.c, rec.v, rec.f, rec.style)
+
+            elif rectype >= rt.FMLA_STRING and rectype <= rt.FMLA_ERROR:
+                if rec.v is not None and rec.c is not None:
+                    row._add_cell(rec.c, rec.v, rec.f, rec.style, fxd=rec.fxd)
+
             elif rectype == rt.END_SHEET_DATA:
                 if row is not None:
                     yield row
@@ -112,7 +117,7 @@ class Worksheet(object):
                 if row.num == rec.row1:
                     # the array formula must take precedence over any cell value previously defined
                     # hence override=True
-                    row._add_cell(rec.col1, None, rec.formula, rec.style, override=True)
+                    row._add_cell(rec.col1, None, rec.formula, rec.style, override=True, fxd=rec.fxd)
                 else:
                     raise Exception("mismatch between row and ARR_FMLA record: row_num: %d rec_row1: %d" % (row.num, rec.row1))
             elif rectype == rt.AC_BEGIN:
@@ -147,7 +152,7 @@ class Worksheet(object):
                 while frow <= rec.row2:
                     fcol = rec.col1
                     while fcol <= rec.col2:
-                        cell = Cell(frow, fcol, formula=rec.formula, override=True)
+                        cell = Cell(frow, fcol, formula=rec.formula, override=True, fxd=rec.fxd)
                         if frow == row.num:
                             row._add_cell_object(cell)
                         else:

@@ -184,6 +184,13 @@ class CellRecord(BaseRecord):
 class FormulaCellRecord(CellRecord):
     brt = rt.FMLA_STRING
 
+    def __init__(self, c, v, f, style, fxd):
+        self.c = c
+        self.v = v
+        self.f = f
+        self.style = style
+        self.fxd = fxd
+
     @classmethod
     def read(cls, reader, rectype, reclen):
         col = reader.read_int()
@@ -209,7 +216,8 @@ class FormulaCellRecord(CellRecord):
             if len(buf) == sz:
                 formula = buf
 
-        res = cls(col, value, formula, style)
+        extra_data = reader.read(reclen)  # overflow just discards stuff
+        res = cls(col, value, formula, style, extra_data)
         res.brt = rectype
         return res
 
@@ -400,7 +408,7 @@ class PlaceholderNameRecord(BaseRecord):
 class ArrayFormulaRecord(BaseRecord):
     brt = rt.ARR_FMLA
 
-    def __init__(self, row1, row2, col1, col2, flag, style, formula_len, formula, extra_data):
+    def __init__(self, row1, row2, col1, col2, flag, style, formula_len, formula, fxd):
         self.row1 = row1
         self.row2 = row2
         self.col1 = col1
@@ -409,7 +417,7 @@ class ArrayFormulaRecord(BaseRecord):
         self.style = style
         self.formula_len = formula_len
         self.formula = formula
-        self.extra_data = extra_data
+        self.fxd = fxd
 
     @classmethod
     def read(cls, reader, rectype, reclen):
@@ -438,7 +446,7 @@ class ArrayFormulaRecord(BaseRecord):
 class SharedFormulaRecord(BaseRecord):
     brt = rt.SHR_FMLA
 
-    def __init__(self, row1, row2, col1, col2, style, formula_len, formula):
+    def __init__(self, row1, row2, col1, col2, style, formula_len, formula, fxd):
         self.row1 = row1
         self.row2 = row2
         self.col1 = col1
@@ -446,6 +454,7 @@ class SharedFormulaRecord(BaseRecord):
         self.style = style
         self.formula_len = formula_len
         self.formula = formula
+        self.fxd = fxd
 
     @classmethod
     def read(cls, reader, rectype, reclen):
@@ -458,8 +467,9 @@ class SharedFormulaRecord(BaseRecord):
 
         formula = reader.read(formula_len)
         style = reader.read_int()
+        extra_data = reader.read(reclen) # overflow just discards stuff
 
-        return cls(row1, row2, col1, col2, style, formula_len, formula)
+        return cls(row1, row2, col1, col2, style, formula_len, formula, extra_data)
 
 class FontRecord(BaseRecord):
     brt = rt.FONT
