@@ -1,12 +1,16 @@
 import os
 import traceback
+import glob
 
 import logging
 
 root_logger = logging.getLogger()
 
-# note the script install_user.py which can be used to install the
-# development version of pyxlsb2 to usersitepackages directory
+# add to the front of the path so that we can import pyxlsb2 from the source tree instead of an installed version
+import sys
+home = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(home))
+
 import pyxlsb2
 
 # we also try openpyxl because a good test is to save an .xlsb file
@@ -140,9 +144,15 @@ def parse_dn(dn, odn, show_values):
     for ffn in fns:
         parse_fn(os.path.normpath(ffn), odn, show_values)
 
-def main(fns, odn=".", show_values=False):
+def main(fns, odn=".", show_values=False, clear_output=False):
     if len(fns) == 0:
         raise Exception("No files or directories provided")
+
+    if os.path.isdir(odn) and clear_output:
+        for ffn in glob.glob(os.path.join(odn, "error.log")) + glob.glob(os.path.join(odn, "*.xls*.txt")):
+            if os.path.isfile(ffn):
+                print("removing %s" % ffn)
+                os.remove(ffn)  
 
     if not os.path.isdir(odn):
         print("creating directory %s" % odn)
@@ -162,6 +172,7 @@ if __name__ == "__main__":
 
     # interactive mode in case we are running the script from a debugger instead of command line
     if len(sys.argv) == 1:
+        os.chdir(home)
         print("running %s with no parameters" % sys.argv[0])
         print("current directory:", os.getcwd())
         print()
@@ -171,7 +182,7 @@ if __name__ == "__main__":
             sys.argv.append(arg)
 
     kwargs = {}
-    opts, args = getopt.getopt(sys.argv[1:], "o:v", ["warning=", "debug=", "info="])
+    opts, args = getopt.getopt(sys.argv[1:], "o:v", ["warning=", "debug=", "info=", "clear-output"])
 
     fns = args[:]
     if len(fns) == 0: fns = ["."]
@@ -196,6 +207,8 @@ if __name__ == "__main__":
             lfn = opt[1]
             print("logging INFO to %s" % lfn)
             logging.basicConfig(filename=lfn, level=logging.INFO)
+        elif opt[0] == "--clear-output":
+            kwargs["clear_output"] = True
 
     main(fns, **kwargs)
 
