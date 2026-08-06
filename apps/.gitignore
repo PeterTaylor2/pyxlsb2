@@ -1,2 +1,5 @@
 baseline
 output
+xls
+*.xls*.txt
+*.log
