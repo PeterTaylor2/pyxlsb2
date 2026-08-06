@@ -352,7 +352,10 @@ class NumberPtg(BasePtg):
         self.value = value
 
     def stringify(self, tokens, workbook):
-        return str(self.value)
+        s = str(self.value)
+        if s.endswith('.0'):
+            s = s[:-2]
+        return s
 
     @classmethod
     def read(cls, reader, ptg):
