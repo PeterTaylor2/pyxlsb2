@@ -210,14 +210,15 @@ class FormulaCellRecord(CellRecord):
         formula = None
         # 0x0001 = Recalc always, 0x0002 = Calc on open, 0x0008 = Part of shared
         reader.read_short()  # TODO Handle the flags
-        sz = reader.read_int()
-        if sz:
-            buf = reader.read(sz)
-            if len(buf) == sz:
-                formula = buf
 
-        extra_data = reader.read(reclen)  # overflow just discards stuff
-        res = cls(col, value, formula, style, extra_data)
+        # see section 2.5.98.4 CellParsedFormula
+        sz = reader.read_int()
+        formula = reader.read(sz)
+
+        sz = reader.read_int()
+        fxd = reader.read(sz)
+
+        res = cls(col, value, formula, style, fxd)
         res.brt = rectype
         return res
 
@@ -408,14 +409,11 @@ class PlaceholderNameRecord(BaseRecord):
 class ArrayFormulaRecord(BaseRecord):
     brt = rt.ARR_FMLA
 
-    def __init__(self, row1, row2, col1, col2, flag, style, formula_len, formula, fxd):
+    def __init__(self, row1, row2, col1, col2, formula, fxd):
         self.row1 = row1
         self.row2 = row2
         self.col1 = col1
         self.col2 = col2
-        self.flag = flag
-        self.style = style
-        self.formula_len = formula_len
         self.formula = formula
         self.fxd = fxd
 
@@ -426,17 +424,16 @@ class ArrayFormulaRecord(BaseRecord):
         col1 = reader.read_int()
         col2 = reader.read_int()
 
-        flag = reader.read_byte()
+        flag = reader.read_byte() # ignored
 
-        formula_len = reader.read_int()
+        # see section 2.5.98.1 ArrayParsedFormula
+        sz = reader.read_int()
+        formula = reader.read(sz)
 
-        formula = reader.read(formula_len)
-        style = reader.read_int()
+        sz = reader.read_int()
+        fxd = reader.read(sz)
 
-        size_read = 24 + formula_len + 1
-        extra_data = reader.read(reclen) # overflow just discards stuff
-
-        return cls(row1, row2, col1, col2, flag, style, formula_len, formula, extra_data)
+        return cls(row1, row2, col1, col2, formula, fxd)
 
 # the specification suggests that the format is similar to SHR_FMLA
 # SHR_FMLA has an extra byte before the formula section which we don't want
@@ -446,13 +443,11 @@ class ArrayFormulaRecord(BaseRecord):
 class SharedFormulaRecord(BaseRecord):
     brt = rt.SHR_FMLA
 
-    def __init__(self, row1, row2, col1, col2, style, formula_len, formula, fxd):
+    def __init__(self, row1, row2, col1, col2, formula, fxd):
         self.row1 = row1
         self.row2 = row2
         self.col1 = col1
         self.col2 = col2
-        self.style = style
-        self.formula_len = formula_len
         self.formula = formula
         self.fxd = fxd
 
@@ -463,13 +458,14 @@ class SharedFormulaRecord(BaseRecord):
         col1 = reader.read_int()
         col2 = reader.read_int()
 
-        formula_len = reader.read_int()
+        # see section 2.5.98.98 SharedParsedFormula
+        sz = reader.read_int()
+        formula = reader.read(sz)
 
-        formula = reader.read(formula_len)
-        style = reader.read_int()
-        extra_data = reader.read(reclen) # overflow just discards stuff
+        sz = reader.read_int()
+        fxd = reader.read(sz)
 
-        return cls(row1, row2, col1, col2, style, formula_len, formula, extra_data)
+        return cls(row1, row2, col1, col2, formula, fxd)
 
 class FontRecord(BaseRecord):
     brt = rt.FONT

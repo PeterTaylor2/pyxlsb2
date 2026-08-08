@@ -55,6 +55,8 @@ class Cell(DeprecatedCellMixin):
         value (mixed): The cell value.
         formula (bytes): The formula PTG bytes.
         style_id (int): The style index in the style table.
+        override (bool): If this cell overrides all definitions for this column.
+        fxd (bytes): The formula extra data needed by certain PTG types.
     """
 
     __slots__ = ('row', 'col', 'value', 'formula', 'style_id', 'override', 'fxd')
