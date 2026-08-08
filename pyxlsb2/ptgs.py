@@ -843,11 +843,20 @@ class Area3dPtg(ClassifiedPtg):
         address = None
         if supporting_link.brt in rt._SUP_LINK_TYPES:
             if first_sheet_idx == last_sheet_idx and first_sheet_idx >= 0:
-                address = "'{}'!{}".format(workbook.sheets[first_sheet_idx].name , first + ':' + last)
-
-        if address is None:
-            _logger.warning("AreaPtg External Address Not Supported {0}:{1} {2} {3}".format(cell_add_first, cell_add_last, first_sheet_idx, last_sheet_idx))
-            #raise NotImplementedError('External address not supported')
+                try:
+                    worksheet_name = workbook.sheets[first_sheet_idx].name
+                except IndexError:
+                    _logger.warning("AreaPtg: workbook sheet_idx %d out of range for %s" % (
+                        first_sheet_idx,
+                        [sht.name for sht in workbook.sheets]))
+                    worksheet_name = "#REF!"
+            else:
+                _logger.warning("AreaPtg: workbook first_sheet_idx %d last_sheet_idx %d must be equal and >= 0" % (
+                        first_sheet_idx, last_sheet_idx))
+                worksheet_name = "#REF!"
+            address = "{}!{}".format(worksheet_name , first + ':' + last)
+        else:
+            _logger.warning("AreaPtg: unknown supporting_link %d" % supporting_link.brt)
 
         return address
 
