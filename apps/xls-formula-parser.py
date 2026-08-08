@@ -186,6 +186,9 @@ if __name__ == "__main__":
 
     fns = args[:]
     if len(fns) == 0: fns = ["."]
+    lfn = None
+    clear_output = False
+    log_level = None
 
     for opt in opts:
         if opt[0] == "-o": kwargs["odn"] = opt[1]
@@ -198,17 +201,24 @@ if __name__ == "__main__":
             yes = input("Do you want to continue with DEBUG logging (Y/N=<CR>:").upper().startswith("Y")
             if yes:
                 print("logging DEBUG to %s" % lfn)
-                logging.basicConfig(filename=lfn, level=logging.DEBUG)
+                log_level = logging.DEBUG
         elif opt[0] == "--warning":
             lfn = opt[1]
             print("logging WARNING to %s" % lfn)
-            logging.basicConfig(filename=lfn, level=logging.WARNING)
+            log_level = logging.WARNING
         elif opt[0] == "--info":
             lfn = opt[1]
             print("logging INFO to %s" % lfn)
-            logging.basicConfig(filename=lfn, level=logging.INFO)
+            log_level = logging.INFO
         elif opt[0] == "--clear-output":
             kwargs["clear_output"] = True
+            clear_output = True
+
+    if log_level is not None:
+        if clear_output and os.path.isfile(lfn):
+            print("removing %s" % lfn)
+            os.remove(lfn)
+        logging.basicConfig(filename=lfn, level=log_level)
 
     main(fns, **kwargs)
 
